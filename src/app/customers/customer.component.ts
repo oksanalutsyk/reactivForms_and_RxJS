@@ -6,8 +6,8 @@ import {
   Validators,
   AbstractControl,
   ValidatorFn,
+  FormArray,
 } from '@angular/forms';
-
 
 function emailMatcher(c: AbstractControl) {
   let emailControl = c.get('email');
@@ -51,6 +51,11 @@ export class CustomerComponent implements OnInit {
   customer = new Customer();
   emailMessage: '';
 
+  //for duplicate data
+  get addresses(): FormArray {
+    return <FormArray>this.customerForm.get('addresses');
+  }
+
   private validationMessages = {
     required: 'Please enter your email address.',
     pattern: 'Please enter a valid email adress.',
@@ -80,37 +85,42 @@ export class CustomerComponent implements OnInit {
       notification: 'email',
       rating: ['', ratingRange(1, 5)],
       sendCatalog: true,
+      // addresses: this.buildAddress(),
+      addresses: this.fb.array([this.buildAddress()]),
     });
     //+ замість функцій при кліку на кожен елемент
     this.customerForm
       .get('notification')
       .valueChanges.subscribe((value) => this.setNotification(value));
-
   }
 
   save() {
     console.log(this.customerForm);
-    console.log('Saved: ' + JSON.stringify(this.customerForm.value));
+    console.log('Saved:', this.customerForm.value);
   }
 
   populateTestData(): void {
     //set ALL default values
-    this.customerForm.setValue({
-      firstName: 'Jack',
-      lastName: 'Smith',
-      email: 'jack@smith.com',
-      sendCatalog: false,
-    });
-
-    //set SOME default values
-    // this.customerForm.patchValue({
+    // this.customerForm.setValue({
     //   firstName: 'Jack',
+    //   lastName: 'Smith',
     //   email: 'jack@smith.com',
     //   sendCatalog: false,
     // });
-  }
 
-  
+    //set SOME default values
+    this.customerForm.patchValue({
+      firstName: 'Jack',
+      lastName: 'Smith',
+      emailGroup: {
+        email: 'jack@smith.com',
+        confirmEmail: 'jack@smith.com',
+      },
+      phone:'911',
+      rating:'1',
+      sendCatalog: false,
+    });
+  }
 
   setNotification(notifyVia: string): void {
     const phoneControl = this.customerForm.get('phone');
@@ -120,5 +130,20 @@ export class CustomerComponent implements OnInit {
       phoneControl.clearValidators();
     }
     phoneControl.updateValueAndValidity();
+  }
+
+  buildAddress(): FormGroup {
+    return this.fb.group({
+      adressType: 'home',
+      street1: '',
+      street2: '',
+      city: '',
+      state: '',
+      zip: '',
+    });
+  }
+
+  addAddress(): void {
+    this.addresses.push(this.buildAddress());
   }
 }
